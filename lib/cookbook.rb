@@ -28,21 +28,46 @@ class Cookbook
     save_csv
   end
 
+  def find(index)
+    @recipes[index]
+  end
+
+  def mark_as_done(index)
+    #trouve la recette
+    recipe = @recipes[index]
+    #recette mark as done
+    recipe.mark_as_done!
+    save_csv
+  end
+
+  private
 
   def load_csv
-    CSV.foreach(@csv_file_path) do |row|
-      # Here, row is an array of columns
-      recipe = Recipe.new(row[0], row[1])
+    CSV.foreach(@csv_file_path, headers: :first_row, header_converters: :symbol) do |row|
+      row[:done] = (row[:done] == "true" ? true : false)
+
+      # row[:done] = row[:done] == "true"
+      # if row[:done] == "true"
+      #   true
+      # else
+      #   false
+      # end
+
+      # {} can be removed to create a recipe
+      #   recipe = Recipe.new({name: row[0], description: row[1], prep_time: row[2]})
+      #   recipe = Recipe.new(name: row[:name], description: row[:description], prep_time: row[:prep_time], done: row[:done])
+      recipe = Recipe.new(row)
       @recipes << recipe
     end
   end
 
   def save_csv
-    csv_options = { col_sep: ',', force_quotes: true, quote_char: '"' }
+    csv_options = { col_sep: ',', force_quotes: true, quote_char: '"', headers: :first_row }
 
     CSV.open(@csv_file_path , 'wb', csv_options) do |csv|
+      csv << ["name","description","prep_time", "done", "difficulty"]
       @recipes.each do |recipe|
-        csv << [recipe.name, recipe.description]
+        csv << [recipe.name, recipe.description, recipe.prep_time, recipe.done?, recipe.difficulty ]
       end
     end
   end
